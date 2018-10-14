@@ -45,13 +45,13 @@ int main() {
 	HEIGHT = 29;
 	WIDTH = 39;
 
-	int SHIP_SIZE = 4;
+	int SHIP_SIZE = 3;
 	my_win = create_newwin(HEIGHT, WIDTH, starty, startx);
 	print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
 
 	int** players_board = allocate_board();
 
-	while ((ch = getch()) != KEY_F(1)) {
+	while ((ch = getch()) != KEY_F(2)) {
 		switch(ch) {
 			case KEY_LEFT:
 				if (inside(CURSORX-2, CURSORY, orientation, SHIP_SIZE)) {
@@ -108,14 +108,15 @@ int main() {
 }
 
 void place_ship(int** players_board, int cursorx, int cursory, int ship_size, ORIENTATION o) {
+	printw("Placed ship, x: %d, y: %d", cursorx, cursory);
 	if (o == HORIZONTAL) {
 	 	for (int i=0; i<ship_size; i++) {
-	 		players_board[cursorx][cursory+2*i] = SHIP_PLACED;
+	 		players_board[cursory][cursorx+2*i] = SHIP_PLACED;
 	 	}
 	}
 	if (o == VERTICAL) {
 		for (int i=0; i<ship_size; i++) {
-			players_board[cursorx+2*i][cursory] = SHIP_PLACED;
+			players_board[cursory+2*i][cursorx] = SHIP_PLACED;
 		}		
 	}
 }
@@ -221,13 +222,13 @@ void destroy_win(WINDOW* local_win) {
 }
 
 int** allocate_board() {
-	//printw("HEIGHT: %d, WIDTH: %d", HEIGHT, WIDTH);
-	int **players_board = (int **)calloc(WIDTH, sizeof(int *));
-	for (int i=0; i < WIDTH; i++) {
-		players_board[i] = (int *)calloc(HEIGHT, sizeof(int));
+	printw("Allocated board, WIDTH: %d, HEIGHT: %d", WIDTH, HEIGHT);
+	int **players_board = (int **)calloc(HEIGHT, sizeof(int *));
+	for (int i=0; i < HEIGHT; i++) {
+		players_board[i] = (int *)calloc(WIDTH, sizeof(int));
 	}
-	for (int i=0; i < WIDTH; i++) {
-		for (int j=0; j < HEIGHT; j++) {
+	for (int i=0; i < HEIGHT; i++) {
+		for (int j=0; j < WIDTH; j++) {
 			players_board[i][j] = EMPTY;
 		}
 	}
@@ -239,10 +240,9 @@ void save_board(int **board) {
 	if (file == NULL) {
 		printf("Could not open file.");
 	}
-	for (int i=0; i<WIDTH; i++) {
-		for (int j=0; j<HEIGHT; j++) {
+	for (int i=0; i<HEIGHT; i++) {
+		for (int j=0; j<WIDTH; j++) {
 			fputc(board[i][j], file);
-
 		}
 		fputc('\n', file);
 	}
