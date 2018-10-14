@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include "constants.h"
 
-#define EMPTY 48;
-#define SHIP_PLACED 49;
-#define SHIP_TOOCLOSE 50;
+#define EMPTY 48
+#define SHIP_PLACED 49
+#define SHIP_TOOCLOSE 50
 
 WINDOW *create_newwin(int height, int width, int starty, int statrx);
 void destroy_win(WINDOW* local_win);
@@ -18,9 +18,9 @@ int** allocate_board();
 void place_ship(int** players_board, int cursorx, int cursory, int ship_size, ORIENTATION o);
 void save_board(int **board);
 void destroy_board(int **players_board);
-bool collision(int** board, int cursorx, int cursory, ORIENTATION o, int ship_size);
 bool field_inside(int cursorx, int cursory);
 void placing_mode(WINDOW *my_win, int** players_board);
+bool ship_collision(int** board, int cursorx, int cursory, ORIENTATION o, int ship_size);
 
 int CURSORXOLD = 1, CURSORYOLD = 1;
 int CURSORX = 1, CURSORY = 1;
@@ -30,13 +30,12 @@ ORIENTATION orientationold = HORIZONTAL;
 int main() {
 	WINDOW *my_win;
 	int startx, starty, width, height;
-	int ch;
-
+	
 	initscr();
 	cbreak();
 	keypad(stdscr, TRUE);
 	curs_set(0); // cursor invisible
-	
+
 	height = 3;
 	width = 10;
 	startx = (LINES - height)/2;
@@ -44,42 +43,47 @@ int main() {
 	printw("Press F1 to exit");
 	refresh();
 	
-	//HEIGHT = 17;
-	//WIDTH = 29;
 	HEIGHT = 29;
 	WIDTH = 39;
 
 	int SHIP_SIZE = 3;
 	my_win = create_newwin(HEIGHT, WIDTH, starty, startx);
-	print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
-
+	
 	int** players_board = allocate_board();
+	placing_mode(my_win, players_board);
+
+	return 0;
+}
+
+void placing_mode(WINDOW *my_win, int** players_board) {
+	int ch;
+	print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
 
 	while ((ch = getch()) != KEY_F(2)) {
 		switch(ch) {
 			case KEY_LEFT:
-				if (ship_inside(CURSORX-2, CURSORY, orientation, SHIP_SIZE)) {
+				if (ship_inside(CURSORX-2, CURSORY, orientation, SHIP_SIZE) && !ship_collision(players_board, CURSORX-2, CURSORY, orientation, SHIP_SIZE)) {
 					CURSORX -= 2;
 				}
 				break;
 			case KEY_RIGHT:
-				if (ship_inside(CURSORX+2, CURSORY, orientation, SHIP_SIZE)) {
+				if (ship_inside(CURSORX+2, CURSORY, orientation, SHIP_SIZE) && !ship_collision(players_board, CURSORX+2, CURSORY, orientation, SHIP_SIZE)) {
 					CURSORX += 2;
 				}
 				break;
 			case KEY_UP:
-				if (ship_inside(CURSORX, CURSORY-2, orientation, SHIP_SIZE)) {
+				if (ship_inside(CURSORX, CURSORY-2, orientation, SHIP_SIZE) && !ship_collision(players_board, CURSORX, CURSORY-2, orientation, SHIP_SIZE)) {
 					CURSORY -= 2;
 				}
 				break;
 			case KEY_DOWN:
-				if (ship_inside(CURSORX, CURSORY+2, orientation, SHIP_SIZE)) {
+				if (ship_inside(CURSORX, CURSORY+2, orientation, SHIP_SIZE) && !ship_collision(players_board, CURSORX, CURSORY+2, orientation, SHIP_SIZE)) {
 					CURSORY += 2;
 				}
 				break;
 			case 32:
 				orientation = (orientation == VERTICAL) ? HORIZONTAL : VERTICAL;
-				if (!ship_inside(CURSORX, CURSORY, orientation, SHIP_SIZE)) {
+				if (!ship_inside(CURSORX, CURSORY, orientation, SHIP_SIZE) && !ship_collision(players_board, CURSORX, CURSORY, orientation, SHIP_SIZE)) {
 					orientation = orientationold;
 				}
 				break;
@@ -108,7 +112,6 @@ int main() {
 	} 
 
 	endwin();
-	return 0;
 }
 
 void place_ship(int** players_board, int cursorx, int cursory, int ship_size, ORIENTATION o) {
@@ -117,13 +120,13 @@ void place_ship(int** players_board, int cursorx, int cursory, int ship_size, OR
 	// 	return;
 	// }
 	if (o == HORIZONTAL) {
-		for (int i=-1; i<=ship_size; i++) {
-			for (int j=-1; j<2; j++) {
-				if (field_inside(cursorx+2*i, cursory+2*j)) {
-					players_board[cursory+2*j][cursorx+2*i] = SHIP_TOOCLOSE;
-				}
-			}
-		}
+		// for (int i=-1; i<=ship_size; i++) {
+		// 	for (int j=-1; j<2; j++) {
+		// 		if (field_inside(cursorx+2*i, cursory+2*j)) {
+		// 			players_board[cursory+2*j][cursorx+2*i] = SHIP_TOOCLOSE;
+		// 		}
+		// 	}
+		// }
 	 	for (int i=0; i<ship_size; i++) {
 	 		players_board[cursory][cursorx+2*i] = SHIP_PLACED;
 	 	}
@@ -131,13 +134,13 @@ void place_ship(int** players_board, int cursorx, int cursory, int ship_size, OR
 	 	//players_board[cursory][cursorx+2*ship_size+2] = SHIP_TOOCLOSE;
 	}
 	if (o == VERTICAL) {
-		for (int i=-1; i<=ship_size; i++) {
-			for (int j=-1; j<2; j++) {
-				if (field_inside(cursorx+2*j, cursory+2*i)) {
-					players_board[cursory+2*i][cursorx+2*j] = SHIP_TOOCLOSE;
-				}
-			}
-		}
+		// for (int i=-1; i<=ship_size; i++) {
+		// 	for (int j=-1; j<2; j++) {
+		// 		if (field_inside(cursorx+2*j, cursory+2*i)) {
+		// 			players_board[cursory+2*i][cursorx+2*j] = SHIP_TOOCLOSE;
+		// 		}
+		// 	}
+		// }
 		for (int i=0; i<ship_size; i++) {
 			players_board[cursory+2*i][cursorx] = SHIP_PLACED;
 		}		
@@ -171,6 +174,24 @@ void print_ship(WINDOW* local_win, int cursorx, int cursory, int ship_size, ORIE
 		}		
 	}
 	wrefresh(local_win);
+}
+
+bool ship_collision(int** board, int cursorx, int cursory, ORIENTATION o, int ship_size) {
+	if (o == HORIZONTAL) {
+		for (int i=0; i<ship_size; i++) {
+			if (board[cursory][cursorx + 2*i] == SHIP_PLACED) {
+				return TRUE;
+			}
+		}
+	}
+	if (o == VERTICAL) {
+		for (int i=0; i<ship_size; i++) {
+			if (board[cursory + 2*i][cursorx] == SHIP_PLACED) {
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
 }
 
 bool ship_inside(int cursorx, int cursory, ORIENTATION o, int ship_size) {
