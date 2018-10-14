@@ -61,3 +61,9 @@ void destroy_win(WINDOW* local_win) {
 	wrefresh(local_win);
 	delwin(local_win);
 }
+
+void allocate_board() {
+	players_board=(int **)calloc(n+4,sizeof(int));
+	for (i=0 ; i < n+4 ; i++)
+			players_board[i] = (int *)calloc(n+4, sizeof(int));
+}

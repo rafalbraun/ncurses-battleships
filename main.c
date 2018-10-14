@@ -6,18 +6,20 @@
 #include <stdio.h>
 #include "constants.h"
 
-typedef enum ORIENTATION {
-	VERTICAL,
-	HORIZONTAL
-} ORIENTATION;
+#define EMPTY 48;
+#define SHIP_PLACED 49;
+#define SHIP_TOOCLOSE 50;
 
 WINDOW *create_newwin(int height, int width, int starty, int statrx);
 void destroy_win(WINDOW* local_win);
 bool inside(int cursorx, int cursory, ORIENTATION o,int ship_size);
 void print_ship(WINDOW* local_win, int cursorx, int cursory, int ship_size, ORIENTATION o, int sign);
+int** allocate_board();
+void place_ship(int** players_board, int cursorx, int cursory, int ship_size, ORIENTATION o);
+void save_board(int **board);
 
-int CURSORXOLD =1, CURSORYOLD = 1;
-int CURSORX =1, CURSORY = 1;
+int CURSORXOLD = 1, CURSORYOLD = 1;
+int CURSORX = 1, CURSORY = 1;
 ORIENTATION orientation = HORIZONTAL;
 ORIENTATION orientationold = HORIZONTAL;
 
@@ -40,12 +42,14 @@ int main() {
 	
 	//HEIGHT = 17;
 	//WIDTH = 29;
-	HEIGHT = 39;
+	HEIGHT = 29;
 	WIDTH = 39;
 
-	int SHIP_SIZE = 3;
+	int SHIP_SIZE = 4;
 	my_win = create_newwin(HEIGHT, WIDTH, starty, startx);
 	print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
+
+	int** players_board = allocate_board();
 
 	while ((ch = getch()) != KEY_F(1)) {
 		switch(ch) {
@@ -75,6 +79,17 @@ int main() {
 					orientation = orientationold;
 				}
 				break;
+			case 's':
+				printw("GAME SAVED");
+				save_board(players_board);
+				break;
+			case 10:
+				//printw(" PLACING SHIP");
+				place_ship(players_board, CURSORX, CURSORY, SHIP_SIZE, orientation);
+				CURSORXOLD = CURSORX = 1;
+				CURSORYOLD = CURSORY = 1;
+				orientation = HORIZONTAL;
+				break;
 		}
 		print_ship(my_win, CURSORXOLD,CURSORYOLD, SHIP_SIZE, orientationold, ' ');
 		print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
@@ -90,6 +105,19 @@ int main() {
 
 	endwin();
 	return 0;
+}
+
+void place_ship(int** players_board, int cursorx, int cursory, int ship_size, ORIENTATION o) {
+	if (o == HORIZONTAL) {
+	 	for (int i=0; i<ship_size; i++) {
+	 		players_board[cursorx][cursory+2*i] = SHIP_PLACED;
+	 	}
+	}
+	if (o == VERTICAL) {
+		for (int i=0; i<ship_size; i++) {
+			players_board[cursorx+2*i][cursory] = SHIP_PLACED;
+		}		
+	}
 }
 
 void print_ship(WINDOW* local_win, int cursorx, int cursory, int ship_size, ORIENTATION o, int sign) {
@@ -111,25 +139,23 @@ bool inside(int cursorx, int cursory, ORIENTATION o, int ship_size) {
 	//printw("cx: %d, cy: %d, w: %d, h: %d", cursorx, cursory, width, height);
 	if (o == HORIZONTAL) {
 		for (int i=0; i<ship_size; i++) {
-			if (cursorx+2*i >= WIDTH ||
-				cursory >= HEIGHT 	 ||
-				cursorx+2*i <= 0 	 ||
-				cursory <= 0) {
+			if (cursorx+2*i >= WIDTH || cursory >= HEIGHT || cursorx+2*i <= 0 || cursory <= 0) {
 				return FALSE;
 			}
 		}
 	}
 	if (o == VERTICAL) {
 		for (int i=0; i<ship_size; i++) {
-			if (cursorx >= WIDTH ||
-				cursory+2*i >= HEIGHT 	 ||
-				cursorx <= 0 	 ||
-				cursory+2*i <= 0) {
+			if (cursorx >= WIDTH || cursory+2*i >= HEIGHT || cursorx <= 0 || cursory+2*i <= 0) {
 				return FALSE;
 			}
 		}		
 	}
 	return TRUE;
+}
+
+bool collision(int cursorx, int cursory, ORIENTATION o, int ship_size) {
+
 }
 
 WINDOW* create_newwin(int height, int width, int starty, int startx) {
@@ -138,6 +164,7 @@ WINDOW* create_newwin(int height, int width, int starty, int startx) {
 	box(local_win, 0, 0);
 	for(int i=0; i<height; i++) {
 		for(int j=0; j<width; j++) {
+
 			// lines
 			if (i % 2 == 0) {
 				mvwaddch(local_win,i,j,ACS_HLINE);
@@ -150,7 +177,7 @@ WINDOW* create_newwin(int height, int width, int starty, int startx) {
 			if (i % 2 == 0 && j % 2 ==0) {
 				mvwaddch(local_win,i,j,ACS_PLUS);
 			}
-			
+			/*			
 			// 
 			if (i % 2 == 0 && j == width-1) {
 				mvwaddch(local_win,i,j,ACS_RTEE);
@@ -177,7 +204,7 @@ WINDOW* create_newwin(int height, int width, int starty, int startx) {
 			}
 			if (i == height-1 && j == width-1) {
 				mvwaddch(local_win,i,j,ACS_LRCORNER);
-			}
+			}*/
 		}
 	}
 
@@ -188,7 +215,37 @@ WINDOW* create_newwin(int height, int width, int starty, int startx) {
 }
 
 void destroy_win(WINDOW* local_win) {
-	wborder(local_win, ' ', ' ', ' ', ' ', ' ', ' ',' ',' ');
+	wborder(local_win,' ',' ',' ',' ',' ',' ',' ',' ');
 	wrefresh(local_win);
 	delwin(local_win);
+}
+
+int** allocate_board() {
+	//printw("HEIGHT: %d, WIDTH: %d", HEIGHT, WIDTH);
+	int **players_board = (int **)calloc(WIDTH, sizeof(int *));
+	for (int i=0; i < WIDTH; i++) {
+		players_board[i] = (int *)calloc(HEIGHT, sizeof(int));
+	}
+	for (int i=0; i < WIDTH; i++) {
+		for (int j=0; j < HEIGHT; j++) {
+			players_board[i][j] = EMPTY;
+		}
+	}
+	return players_board;
+}
+
+void save_board(int **board) {
+	FILE* file = fopen("./save.out", "w");
+	if (file == NULL) {
+		printf("Could not open file.");
+	}
+	for (int i=0; i<WIDTH; i++) {
+		for (int j=0; j<HEIGHT; j++) {
+			fputc(board[i][j], file);
+
+		}
+		fputc('\n', file);
+	}
+	fclose(file);
+	printf("File saved.\n");
 }

@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		else
 		{printf("Nieprawidłowy typ\n");
 		exit(1);}
-
+		
 		/* nazwa pliku do odczytu */
 		printf("Jaki plik ma zostać użyty do odczytu (jesli wcisniesz teraz q plik nie zostanie zdefiniowany)?\n");
 		scanf("%s", load_name);
