@@ -11,16 +11,19 @@
 #define SHIP_TOOCLOSE 50
 
 WINDOW *create_newwin(int height, int width, int starty, int statrx);
-void destroy_win(WINDOW* local_win);
-bool ship_inside(int cursorx, int cursory, ORIENTATION o, int ship_size);
-void print_ship(WINDOW* local_win, int cursorx, int cursory, int ship_size, ORIENTATION o, int sign);
 int** allocate_board();
+bool ship_inside(int cursorx, int cursory, ORIENTATION o, int ship_size);
+bool field_inside(int cursorx, int cursory);
+bool ship_collision(int** board, int cursorx, int cursory, ORIENTATION o, int ship_size);
+void destroy_win(WINDOW* local_win);
+void print_ship(WINDOW* local_win, int cursorx, int cursory, int ship_size, ORIENTATION o, int sign);
 void place_ship(int** players_board, int cursorx, int cursory, int ship_size, ORIENTATION o);
 void save_board(int **board);
 void destroy_board(int **players_board);
-bool field_inside(int cursorx, int cursory);
 void placing_mode(WINDOW *my_win, int** players_board, int SHIP_SIZE);
-bool ship_collision(int** board, int cursorx, int cursory, ORIENTATION o, int ship_size);
+void select_mode(WINDOW *my_win, int** players_board);
+void print_normal(WINDOW *my_win, int cursorx, int cursory);
+void print_pointer(WINDOW *my_win, int cursorx, int cursory);
 
 int CURSORXOLD = 1, CURSORYOLD = 1;
 int CURSORX = 1, CURSORY = 1;
@@ -35,6 +38,8 @@ int main() {
 	cbreak();
 	keypad(stdscr, TRUE);
 	curs_set(0); // cursor invisible
+	start_color();
+	init_pair(1, COLOR_YELLOW, COLOR_GREEN);
 
 	height = 3;
 	width = 10;
@@ -50,19 +55,78 @@ int main() {
 	my_win = create_newwin(HEIGHT, WIDTH, starty, startx);
 	
 	int** players_board = allocate_board();
-	placing_mode(my_win, players_board, 4);
-	placing_mode(my_win, players_board, 3);
-	placing_mode(my_win, players_board, 3);
-	placing_mode(my_win, players_board, 2);
-	placing_mode(my_win, players_board, 2);
-	placing_mode(my_win, players_board, 2);
-	placing_mode(my_win, players_board, 1);
-	placing_mode(my_win, players_board, 1);
-	placing_mode(my_win, players_board, 1);
-	placing_mode(my_win, players_board, 1);
+	select_mode(my_win, players_board);
+	// placing_mode(my_win, players_board, 4);
+	// placing_mode(my_win, players_board, 3);
+	// placing_mode(my_win, players_board, 3);
+	// placing_mode(my_win, players_board, 2);
+	// placing_mode(my_win, players_board, 2);
+	// placing_mode(my_win, players_board, 2);s
+	// placing_mode(my_win, players_board, 1);
+	// placing_mode(my_win, players_board, 1);
+	// placing_mode(my_win, players_board, 1);
+	// placing_mode(my_win, players_board, 1);
+
+	/*
+	// main loop 
+	while(!game_finished()) {
+		select_mode(my_win, players_board);
+		enemy_shot(players_board);
+		refresh_board(my_win, players_board);
+	}*/
+
 	endwin();
 
 	return 0;
+}
+
+void select_mode(WINDOW *my_win, int** players_board) {
+	int ch;
+	//print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
+
+	print_pointer(my_win,CURSORX,CURSORY);
+	wrefresh(my_win);
+
+	while ((ch = getch()) != KEY_F(2)) {
+		print_normal(my_win,CURSORX,CURSORY);
+		wrefresh(my_win);
+		switch(ch) {
+			case KEY_LEFT:
+				CURSORX -= 2;
+				break;
+			case KEY_RIGHT:
+				CURSORX += 2;
+				break;
+			case KEY_UP:
+				CURSORY -= 2;
+				break;
+			case KEY_DOWN:
+				CURSORY += 2;
+				break;
+		}
+		//printw("qdqdqwd");
+		attron(COLOR_PAIR(1));
+		print_pointer(my_win,CURSORX,CURSORY);
+		attroff(COLOR_PAIR(0));
+
+		wrefresh(my_win);
+	}
+}
+
+void print_normal(WINDOW *my_win, int cursorx, int cursory) {
+	mvwaddch(my_win,cursory-1,cursorx,ACS_HLINE);
+	mvwaddch(my_win,cursory+1,cursorx,ACS_HLINE);
+	mvwaddch(my_win,cursory,cursorx-1,ACS_VLINE);
+	mvwaddch(my_win,cursory,cursorx+1,ACS_VLINE);
+	mvwaddch(my_win,cursory,cursorx,' ');	
+}
+
+void print_pointer(WINDOW *my_win, int cursorx, int cursory) {
+	mvwaddch(my_win,cursory-1,cursorx,ACS_TTEE);
+	mvwaddch(my_win,cursory+1,cursorx,ACS_BTEE);
+	mvwaddch(my_win,cursory,cursorx-1,ACS_LTEE);
+	mvwaddch(my_win,cursory,cursorx+1,ACS_RTEE);
+	//mvwaddch(my_win,cursory,cursorx,ACS_PLUS);
 }
 
 void placing_mode(WINDOW *my_win, int** players_board, int SHIP_SIZE) {
