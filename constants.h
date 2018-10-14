@@ -1,4 +1,4 @@
-int SHIP_SIZE = 4;
+//int SHIP_SIZE = 4;
 int STEP_VERTICAL = 2;
 int STEP_HORIZONTAL = 4;
 int STARTX = 5;

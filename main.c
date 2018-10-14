@@ -19,7 +19,7 @@ void place_ship(int** players_board, int cursorx, int cursory, int ship_size, OR
 void save_board(int **board);
 void destroy_board(int **players_board);
 bool field_inside(int cursorx, int cursory);
-void placing_mode(WINDOW *my_win, int** players_board);
+void placing_mode(WINDOW *my_win, int** players_board, int SHIP_SIZE);
 bool ship_collision(int** board, int cursorx, int cursory, ORIENTATION o, int ship_size);
 
 int CURSORXOLD = 1, CURSORYOLD = 1;
@@ -46,16 +46,26 @@ int main() {
 	HEIGHT = 29;
 	WIDTH = 39;
 
-	int SHIP_SIZE = 3;
+	//int SHIP_SIZE = 3;
 	my_win = create_newwin(HEIGHT, WIDTH, starty, startx);
 	
 	int** players_board = allocate_board();
-	placing_mode(my_win, players_board);
+	placing_mode(my_win, players_board, 4);
+	placing_mode(my_win, players_board, 3);
+	placing_mode(my_win, players_board, 3);
+	placing_mode(my_win, players_board, 2);
+	placing_mode(my_win, players_board, 2);
+	placing_mode(my_win, players_board, 2);
+	placing_mode(my_win, players_board, 1);
+	placing_mode(my_win, players_board, 1);
+	placing_mode(my_win, players_board, 1);
+	placing_mode(my_win, players_board, 1);
+	endwin();
 
 	return 0;
 }
 
-void placing_mode(WINDOW *my_win, int** players_board) {
+void placing_mode(WINDOW *my_win, int** players_board, int SHIP_SIZE) {
 	int ch;
 	print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
 
@@ -96,7 +106,8 @@ void placing_mode(WINDOW *my_win, int** players_board) {
 				place_ship(players_board, CURSORX, CURSORY, SHIP_SIZE, orientation);
 				CURSORXOLD = CURSORX = 1;
 				CURSORYOLD = CURSORY = 1;
-				orientation = HORIZONTAL;
+				orientation = orientationold = HORIZONTAL;
+				return;
 				break;
 		}
 		print_ship(my_win, CURSORXOLD,CURSORYOLD, SHIP_SIZE, orientationold, ' ');
@@ -109,9 +120,7 @@ void placing_mode(WINDOW *my_win, int** players_board) {
 		//printw("qdqdqwd");
 
 		wrefresh(my_win);
-	} 
-
-	endwin();
+	}
 }
 
 void place_ship(int** players_board, int cursorx, int cursory, int ship_size, ORIENTATION o) {
