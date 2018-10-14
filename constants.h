@@ -5,4 +5,13 @@ int STARTX = 5;
 int STARTY = 5;
 int BOARD_SIZE = 10;
 
+int HEIGHT, WIDTH;
+
+enum STATE {
+	NOTHING,
+	PLACED,
+	SURROUND,
+	MISSED,
+	HIT
+};
 

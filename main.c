@@ -6,103 +6,189 @@
 #include <stdio.h>
 #include "constants.h"
 
-WINDOW *create_newwin(int height, int width, int starty_main, int startx_main);
-void destroy_win(WINDOW *local_win);
+typedef enum ORIENTATION {
+	VERTICAL,
+	HORIZONTAL
+} ORIENTATION;
 
-enum state {
-	NOTHING,
-	PLACED,
-	SURROUND,
-	MISSED,
-	HIT
-};
+WINDOW *create_newwin(int height, int width, int starty, int statrx);
+void destroy_win(WINDOW* local_win);
+bool inside(int cursorx, int cursory, ORIENTATION o,int ship_size);
+void print_ship(WINDOW* local_win, int cursorx, int cursory, int ship_size, ORIENTATION o, int sign);
 
-int HEIGHT;
-int WIDTH;
+int CURSORXOLD =1, CURSORYOLD = 1;
+int CURSORX =1, CURSORY = 1;
+ORIENTATION orientation = HORIZONTAL;
+ORIENTATION orientationold = HORIZONTAL;
 
-WINDOW *players_window;
-int **players_board;
-
-int main(int argc, char* argv[]) {
-
-	HEIGHT = BOARD_SIZE * STEP_VERTICAL;
-	WIDTH = BOARD_SIZE * STEP_HORIZONTAL;
+int main() {
+	WINDOW *my_win;
+	int startx, starty, width, height;
+	int ch;
 
 	initscr();
 	cbreak();
 	keypad(stdscr, TRUE);
-	curs_set(0);
-
-	//printf("SHIP_SIZE: %d \n", SHIP_SIZE);
-
-	//create_board();
-}
-
-void create_board() {
-	players_board=(int **)calloc(BOARD_SIZE, sizeof(int));
-	for (int i=0 ; i < BOARD_SIZE ; i++) {
-		players_board[i] = (int *)calloc(BOARD_SIZE, sizeof(int));
-	}
+	curs_set(0); // cursor invisible
 	
-	WINDOW *local_win;
-	local_win = create_newwin(HEIGHT, WIDTH, STARTY, STARTX);
-	getch();
-	destroy_win(local_win);
+	height = 3;
+	width = 10;
+	startx = (LINES - height)/2;
+	starty = (COLS = width)/2;
+	printw("Press F1 to exit");
+	refresh();
+	
+	//HEIGHT = 17;
+	//WIDTH = 29;
+	HEIGHT = 39;
+	WIDTH = 39;
+
+	int SHIP_SIZE = 3;
+	my_win = create_newwin(HEIGHT, WIDTH, starty, startx);
+	print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
+
+	while ((ch = getch()) != KEY_F(1)) {
+		switch(ch) {
+			case KEY_LEFT:
+				if (inside(CURSORX-2, CURSORY, orientation, SHIP_SIZE)) {
+					CURSORX -= 2;
+				}
+				break;
+			case KEY_RIGHT:
+				if (inside(CURSORX+2, CURSORY, orientation, SHIP_SIZE)) {
+					CURSORX += 2;
+				}
+				break;
+			case KEY_UP:
+				if (inside(CURSORX, CURSORY-2, orientation, SHIP_SIZE)) {
+					CURSORY -= 2;
+				}
+				break;
+			case KEY_DOWN:
+				if (inside(CURSORX, CURSORY+2, orientation, SHIP_SIZE)) {
+					CURSORY += 2;
+				}
+				break;
+			case 32:
+				orientation = (orientation == VERTICAL) ? HORIZONTAL : VERTICAL;
+				if (!inside(CURSORX, CURSORY, orientation, SHIP_SIZE)) {
+					orientation = orientationold;
+				}
+				break;
+		}
+		print_ship(my_win, CURSORXOLD,CURSORYOLD, SHIP_SIZE, orientationold, ' ');
+		print_ship(my_win, CURSORX, CURSORY, SHIP_SIZE, orientation, ACS_CKBOARD);
+		//mvwaddch(my_win,CURSORYOLD,CURSORXOLD,' ');
+		//mvwaddch(my_win,CURSORY,CURSORX,ACS_CKBOARD);
+		CURSORXOLD = CURSORX;
+		CURSORYOLD = CURSORY;
+		orientationold = orientation;
+		//printw("qdqdqwd");
+
+		wrefresh(my_win);
+	} 
+
+	endwin();
+	return 0;
 }
 
-WINDOW *create_newwin(int height, int width, int starty_main, int startx_main)    //done
-{	
-	WINDOW *local_win;
+void print_ship(WINDOW* local_win, int cursorx, int cursory, int ship_size, ORIENTATION o, int sign) {
+	//mvwaddch(local_win,cursory,cursorx,sign);
+	if (o == HORIZONTAL) {
+		for (int i=0; i<ship_size; i++) {
+			mvwaddch(local_win,cursory,cursorx+2*i,sign);
+		}
+	}
+	if (o == VERTICAL) {
+		for (int i=0; i<ship_size; i++) {
+			mvwaddch(local_win,cursory+2*i,cursorx,sign);
+		}		
+	}
+	wrefresh(local_win);
+}
 
-	int i=0, j=0;
-
-	local_win = newwin(height, width, STARTY, STARTX);
-	box(local_win, 0 , 0);
-	for (j=1 ; j<HEIGHT ; j++) {	
-		if ((j%2) == 0) {		
-			for (i=1 ; i<WIDTH ; i++) {
-				mvwaddch(local_win,j,i,ACS_HLINE);
-				mvwaddch(local_win,j,i,ACS_HLINE);
-				mvwaddch(local_win,j,i,ACS_HLINE);
-				mvwaddch(local_win,j,i,ACS_HLINE);
-			}
-		} else {
-			for (i=0 ; i<WIDTH ; i++) {
-				if ((i%4) == 0) {
-					mvwaddch(local_win,j,i,ACS_VLINE);
-				}
-				else {
-					mvwaddch(local_win,j,i,' ');
-				}
+bool inside(int cursorx, int cursory, ORIENTATION o, int ship_size) {
+	//printw("cx: %d, cy: %d, w: %d, h: %d", cursorx, cursory, width, height);
+	if (o == HORIZONTAL) {
+		for (int i=0; i<ship_size; i++) {
+			if (cursorx+2*i >= WIDTH ||
+				cursory >= HEIGHT 	 ||
+				cursorx+2*i <= 0 	 ||
+				cursory <= 0) {
+				return FALSE;
 			}
 		}
 	}
-	wrefresh(local_win);
+	if (o == VERTICAL) {
+		for (int i=0; i<ship_size; i++) {
+			if (cursorx >= WIDTH ||
+				cursory+2*i >= HEIGHT 	 ||
+				cursorx <= 0 	 ||
+				cursory+2*i <= 0) {
+				return FALSE;
+			}
+		}		
+	}
+	return TRUE;
+}
 
+WINDOW* create_newwin(int height, int width, int starty, int startx) {
+	WINDOW* local_win;
+	local_win = newwin(height, width, starty, startx);
+	box(local_win, 0, 0);
+	for(int i=0; i<height; i++) {
+		for(int j=0; j<width; j++) {
+			// lines
+			if (i % 2 == 0) {
+				mvwaddch(local_win,i,j,ACS_HLINE);
+			}
+			if (j % 2 == 0) {
+				mvwaddch(local_win,i,j,ACS_VLINE);
+			}
+
+			// plus
+			if (i % 2 == 0 && j % 2 ==0) {
+				mvwaddch(local_win,i,j,ACS_PLUS);
+			}
+			
+			// 
+			if (i % 2 == 0 && j == width-1) {
+				mvwaddch(local_win,i,j,ACS_RTEE);
+			}
+			if (i % 2 == 0 && j == 0) {
+				mvwaddch(local_win,i,j,ACS_LTEE);
+			}
+			if (j % 2 == 0 && i == 0) {
+				mvwaddch(local_win,i,j,ACS_TTEE);
+			}
+			if (j % 2 == 0 && i == height-1) {
+				mvwaddch(local_win,i,j,ACS_BTEE);
+			}
+
+			// corners
+			if (i == 0 && j == 0) {
+				mvwaddch(local_win,i,j,ACS_ULCORNER);
+			}
+			if (i == 0 && j == width-1) {
+				mvwaddch(local_win,i,j,ACS_URCORNER);
+			}
+			if (i == height-1 && j == 0) {
+				mvwaddch(local_win,i,j,ACS_LLCORNER);
+			}
+			if (i == height-1 && j == width-1) {
+				mvwaddch(local_win,i,j,ACS_LRCORNER);
+			}
+		}
+	}
+
+	//mvwaddch(local_win,CURSORX,CURSORY,ACS_CKBOARD);
+	
+	wrefresh(local_win);
 	return local_win;
 }
 
-void destroy_win(WINDOW *local_win) {
-	for (int j=1 ; j<HEIGHT ; j++) {
-		if ((j%2) == 0) {
-			for (int i=1 ; i<WIDTH ; i++) {
-				mvwaddch(local_win,j,i,' ');
-				mvwaddch(local_win,j,i,' ');
-				mvwaddch(local_win,j,i,' ');
-				mvwaddch(local_win,j,i,' ');
-			}
-		} else {
-			for (int i=0 ; i<WIDTH ; i++) {
-				if ((i%4) == 0) {
-					mvwaddch(local_win,j,i,' ');
-				} else {
-					mvwaddch(local_win,j,i,' ');
-				}
-			}
-		}
-	}
-
-	wborder(local_win, ' ', ' ', ' ',' ',' ',' ',' ',' ');
+void destroy_win(WINDOW* local_win) {
+	wborder(local_win, ' ', ' ', ' ', ' ', ' ', ' ',' ',' ');
 	wrefresh(local_win);
 	delwin(local_win);
 }

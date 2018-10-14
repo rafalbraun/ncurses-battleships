@@ -1,4 +1,7 @@
 all: a.out
 
-a.out: battleships.c
-	gcc battleships.c -o a.out -lncurses -lmenu
+a.out: main.c
+	gcc main.c -o a.out -lncurses -lmenu
+
+clean:
+	rm a.out
