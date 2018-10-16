@@ -24,6 +24,7 @@ void placing_mode(WINDOW *my_win, int** players_board, int SHIP_SIZE);
 void select_mode(WINDOW *my_win, int** players_board);
 void print_normal(WINDOW *my_win, int cursorx, int cursory);
 void print_pointer(WINDOW *my_win, int cursorx, int cursory);
+void fill_board_randomly(int** board);
 
 int CURSORXOLD = 1, CURSORYOLD = 1;
 int CURSORX = 1, CURSORY = 1;
@@ -38,8 +39,8 @@ int main() {
 	cbreak();
 	keypad(stdscr, TRUE);
 	curs_set(0); // cursor invisible
-	start_color();
-	init_pair(1, COLOR_YELLOW, COLOR_GREEN);
+	//start_color();
+	//init_pair(1, COLOR_YELLOW, COLOR_GREEN);
 
 	height = 3;
 	width = 10;
@@ -54,26 +55,27 @@ int main() {
 	//int SHIP_SIZE = 3;
 	my_win = create_newwin(HEIGHT, WIDTH, starty, startx);
 	
-	int** players_board = allocate_board();
-	select_mode(my_win, players_board);
+	//int** players_board = allocate_board();
+	//select_mode(my_win, players_board);
 	// placing_mode(my_win, players_board, 4);
 	// placing_mode(my_win, players_board, 3);
 	// placing_mode(my_win, players_board, 3);
 	// placing_mode(my_win, players_board, 2);
 	// placing_mode(my_win, players_board, 2);
-	// placing_mode(my_win, players_board, 2);s
+	// placing_mode(my_win, players_board, 2);
 	// placing_mode(my_win, players_board, 1);
 	// placing_mode(my_win, players_board, 1);
 	// placing_mode(my_win, players_board, 1);
 	// placing_mode(my_win, players_board, 1);
 
-	/*
+	int** enemys_board = allocate_board();
+	fill_board_randomly(enemys_board);
 	// main loop 
-	while(!game_finished()) {
-		select_mode(my_win, players_board);
-		enemy_shot(players_board);
-		refresh_board(my_win, players_board);
-	}*/
+	//while(true) { //!game_finished()) {
+		select_mode(my_win, enemys_board);
+		//enemy_shot(players_board);
+		//refresh_board(my_win, players_board);
+	//}
 
 	endwin();
 
@@ -103,11 +105,19 @@ void select_mode(WINDOW *my_win, int** players_board) {
 			case KEY_DOWN:
 				CURSORY += 2;
 				break;
+			case 10:
+				if (players_board[CURSORY][CURSORX] == SHIP_PLACED) {
+					mvwaddch(my_win,CURSORY,CURSORX,ACS_CKBOARD);
+				} else {
+					mvwaddch(my_win,CURSORY,CURSORX,ACS_BULLET);
+				}
+				wrefresh(my_win);
+				break;
 		}
 		//printw("qdqdqwd");
-		attron(COLOR_PAIR(1));
+		//attron(COLOR_PAIR(1));
 		print_pointer(my_win,CURSORX,CURSORY);
-		attroff(COLOR_PAIR(0));
+		//attroff(COLOR_PAIR(0));
 
 		wrefresh(my_win);
 	}
@@ -118,7 +128,7 @@ void print_normal(WINDOW *my_win, int cursorx, int cursory) {
 	mvwaddch(my_win,cursory+1,cursorx,ACS_HLINE);
 	mvwaddch(my_win,cursory,cursorx-1,ACS_VLINE);
 	mvwaddch(my_win,cursory,cursorx+1,ACS_VLINE);
-	mvwaddch(my_win,cursory,cursorx,' ');	
+	//mvwaddch(my_win,cursory,cursorx,' ');
 }
 
 void print_pointer(WINDOW *my_win, int cursorx, int cursory) {
@@ -188,7 +198,7 @@ void placing_mode(WINDOW *my_win, int** players_board, int SHIP_SIZE) {
 }
 
 void place_ship(int** players_board, int cursorx, int cursory, int ship_size, ORIENTATION o) {
-	printw("Placed ship, x: %d, y: %d", cursorx, cursory);
+	//printw("Placed ship, x: %d, y: %d", cursorx, cursory);
 	// if (collision(cursorx, cursory, o, ship_size)) {
 	// 	return;
 	// }
@@ -334,7 +344,7 @@ WINDOW* create_newwin(int height, int width, int starty, int startx) {
 			if (i % 2 == 0 && j % 2 ==0) {
 				mvwaddch(local_win,i,j,ACS_PLUS);
 			}
-			/*			
+					
 			// 
 			if (i % 2 == 0 && j == width-1) {
 				mvwaddch(local_win,i,j,ACS_RTEE);
@@ -361,7 +371,7 @@ WINDOW* create_newwin(int height, int width, int starty, int startx) {
 			}
 			if (i == height-1 && j == width-1) {
 				mvwaddch(local_win,i,j,ACS_LRCORNER);
-			}*/
+			}
 		}
 	}
 
@@ -378,7 +388,7 @@ void destroy_win(WINDOW* local_win) {
 }
 
 int** allocate_board() {
-	printw("Allocated board, WIDTH: %d, HEIGHT: %d", WIDTH, HEIGHT);
+	//printw("Allocated board, WIDTH: %d, HEIGHT: %d", WIDTH, HEIGHT);
 	int **players_board = (int **)calloc(HEIGHT, sizeof(int *));
 	for (int i=0; i < HEIGHT; i++) {
 		players_board[i] = (int *)calloc(WIDTH, sizeof(int));
@@ -389,7 +399,7 @@ int** allocate_board() {
 		}
 	}
 	return players_board;
-}
+}zw
 
 void save_board(int **board) {
 	FILE* file = fopen("./save.out", "w");
@@ -411,4 +421,13 @@ void destroy_board(int **players_board) {
 		free(players_board[i]);
 	}
 	free(players_board);
+}
+
+void fill_board_randomly(int** board) {
+	board[1][1] = SHIP_PLACED;
+	board[3][3] = SHIP_PLACED;
+	board[5][5] = SHIP_PLACED;
+	board[7][7] = SHIP_PLACED;
+
+
 }
